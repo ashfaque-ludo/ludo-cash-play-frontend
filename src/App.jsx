@@ -1,3 +1,4 @@
+import RoomGen from "./pages/RoomGen";
 
 // Recharge Routes (Added by Phase 1)
 import AddMoney from './pages/AddMoney';
