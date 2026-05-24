@@ -13,25 +13,26 @@ export default function Play() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-purple-900 p-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-white mb-8 text-center">🎮 Pick Your Arena</h1>
-        
-        <button
-          onClick={() => navigate('/create-room')}
-          className="w-full bg-gradient-to-r from-green-500 to-cyan-500 text-white font-bold py-4 rounded-xl mb-8 text-xl"
-        >
-          ✨ Create Challenge
-        </button>
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-purple-900 p-4 pt-32">
+      
+      <button
+        onClick={() => navigate('/create-room')}
+        className="fixed top-24 left-1/2 -translate-x-1/2 z-[99999] bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-xl text-xl font-bold shadow-2xl"
+      >
+        ✨ Create Challenge
+      </button>
 
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold text-white mb-8 text-center mt-16">🎮 Pick Your Arena</h1>
+        
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {tables.map(t => (
-            <div key={t._id} className="bg-white/10 border border-cyan-400 rounded-xl p-6 text-center hover:scale-105 transition">
+            <div key={t._id} className="bg-white/10 border border-cyan-400 rounded-xl p-6 text-center">
               <p className="text-cyan-400 text-3xl font-bold mb-2">{t.label}</p>
               <p className="text-purple-300 text-sm mb-4">Entry Fee</p>
               <button
                 onClick={() => navigate(`/create-room?amount=${t.stake}`)}
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold py-2 rounded"
+                className="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 rounded"
               >
                 Create Room
               </button>
