@@ -1,52 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Play() {
   const navigate = useNavigate();
-  const [tables, setTables] = useState([
-    {_id: '1', label: '₹50', stake: 50},
-    {_id: '2', label: '₹100', stake: 100},
-    {_id: '3', label: '₹200', stake: 200},
-    {_id: '4', label: '₹500', stake: 500}
-  ]);
-
-  useEffect(() => {
-    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/public/stake-tables`)
-      .then(res => { if(res.data && res.data.length) setTables(res.data); })
-      .catch(() => {});
-  }, []);
+  const stakes = [50, 100, 200, 500, 1000];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-purple-900 p-4">
-      <div className="max-w-6xl mx-auto pt-20">
+    <div style={{minHeight: '100vh', background: 'linear-gradient(135deg, #4c1d95, #000, #4c1d95)', padding: '80px 20px'}}>
+      <div style={{maxWidth: '1200px', margin: '0 auto'}}>
         
         <button
           onClick={() => navigate('/create-room')}
-          className="w-full bg-gradient-to-r from-green-500 to-cyan-500 hover:from-green-600 hover:to-cyan-600 text-white font-bold py-5 rounded-2xl mb-8 text-2xl shadow-2xl"
+          style={{
+            width: '100%',
+            background: 'linear-gradient(90deg, #10b981, #06b6d4)',
+            color: 'white',
+            fontSize: '24px',
+            fontWeight: 'bold',
+            padding: '20px',
+            borderRadius: '16px',
+            border: 'none',
+            cursor: 'pointer',
+            marginBottom: '32px',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+          }}
         >
-          ✨ Create Challenge
+          ✨ CREATE CHALLENGE
         </button>
 
-        <h2 className="text-3xl font-bold text-white mb-6">🎮 Stake Tables</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          {tables.map(t => (
-            <div key={t._id} className="bg-white/10 border border-cyan-400 rounded-xl p-6 text-center hover:scale-105 transition">
-              <p className="text-cyan-400 text-4xl font-bold mb-2">{t.label}</p>
-              <p className="text-purple-300 text-sm mb-4">Entry Fee</p>
+        <h2 style={{color: 'white', fontSize: '32px', marginBottom: '24px'}}>🎮 Stake Tables</h2>
+        
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px'}}>
+          {stakes.map(amt => (
+            <div key={amt} style={{
+              background: 'rgba(255,255,255,0.1)',
+              border: '2px solid #06b6d4',
+              borderRadius: '16px',
+              padding: '24px',
+              textAlign: 'center'
+            }}>
+              <p style={{color: '#06b6d4', fontSize: '36px', fontWeight: 'bold', margin: '0 0 8px 0'}}>₹{amt}</p>
+              <p style={{color: '#c4b5fd', fontSize: '14px', marginBottom: '16px'}}>Entry Fee</p>
               <button
-                onClick={() => navigate(`/create-room?amount=${t.stake}`)}
-                className="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 rounded"
+                onClick={() => navigate(`/create-room?amount=${amt}`)}
+                style={{
+                  width: '100%',
+                  background: '#ec4899',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  padding: '10px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
               >
                 Create Room
               </button>
             </div>
           ))}
-        </div>
-
-        <h2 className="text-3xl font-bold text-white mb-6">🔥 Open Challenges</h2>
-        <div className="bg-white/5 rounded-xl p-8 text-center text-purple-300">
-          No open challenges yet
         </div>
       </div>
     </div>
