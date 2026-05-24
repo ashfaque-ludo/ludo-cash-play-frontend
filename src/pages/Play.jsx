@@ -17,6 +17,13 @@ export default function Play() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold text-white mb-8 text-center">🎮 Pick Your Arena</h1>
         
+        <button
+          onClick={() => navigate('/create-room')}
+          className="w-full bg-gradient-to-r from-green-500 to-cyan-500 text-white font-bold py-4 rounded-xl mb-8 text-xl"
+        >
+          ✨ Create Challenge
+        </button>
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {tables.map(t => (
             <div key={t._id} className="bg-white/10 border border-cyan-400 rounded-xl p-6 text-center hover:scale-105 transition">
@@ -26,7 +33,7 @@ export default function Play() {
                 onClick={() => navigate(`/create-room?amount=${t.stake}`)}
                 className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold py-2 rounded"
               >
-                ✅ Create Room
+                Create Room
               </button>
             </div>
           ))}
