@@ -26,7 +26,7 @@ function App() {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/upload",
+        "https://ludo-cash-play.onrender.com/api/upload",
         formData
       );
 
