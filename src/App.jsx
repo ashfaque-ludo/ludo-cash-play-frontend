@@ -1,4 +1,5 @@
 import RoomGen from "./pages/RoomGen";
+import ScreenshotUpload from "./pages/ScreenshotUpload";
 import RoomGen from "./pages/RoomGen";
 
 // Recharge Routes (Added by Phase 1)

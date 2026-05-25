@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { tables } from "../data/stakeTables";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { api, fmtINR, formatApiError } from "@/lib/api";
