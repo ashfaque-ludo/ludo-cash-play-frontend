@@ -16,7 +16,7 @@ import {
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { ShieldCheck, Users, Wallet as WalletIcon, ArrowDownToLine, Trophy, Tag, Megaphone, BarChart3, FileText, Lock, Ban, KeyRound, Settings, Layers, UserPlus, Trash2, Camera, ZoomIn, Share2 } from "lucide-react";
+import { ShieldCheck, ShieldAlert, ShieldOff, Users, Wallet as WalletIcon, ArrowDownToLine, Trophy, Tag, Megaphone, BarChart3, FileText, Lock, Ban, KeyRound, Settings, Layers, UserPlus, Trash2, Camera, ZoomIn, Share2, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 const ROLES = ["user", "support_agent", "staff_manager", "admin", "super_admin"];
@@ -47,6 +47,7 @@ export default function Admin() {
             <TabsTrigger value="matches" data-testid="tab-matches"><Trophy className="w-3.5 h-3.5 mr-1" /> Matches</TabsTrigger>
             <TabsTrigger value="screenshots" data-testid="tab-screenshots"><Camera className="w-3.5 h-3.5 mr-1" /> Screenshots</TabsTrigger>
             <TabsTrigger value="referrals" data-testid="tab-referrals"><Share2 className="w-3.5 h-3.5 mr-1" /> Referrals</TabsTrigger>
+            <TabsTrigger value="kyc" data-testid="tab-kyc"><ShieldCheck className="w-3.5 h-3.5 mr-1" /> KYC</TabsTrigger>
             {can("admin") && <TabsTrigger value="promos" data-testid="tab-promos"><Tag className="w-3.5 h-3.5 mr-1" /> Promos</TabsTrigger>}
             {can("admin") && <TabsTrigger value="broadcasts" data-testid="tab-broadcasts"><Megaphone className="w-3.5 h-3.5 mr-1" /> Broadcasts</TabsTrigger>}
             {can("admin") && <TabsTrigger value="logs" data-testid="tab-logs"><FileText className="w-3.5 h-3.5 mr-1" /> Logs</TabsTrigger>}
@@ -62,6 +63,7 @@ export default function Admin() {
           <TabsContent value="matches"><MatchesTab actor={user} /></TabsContent>
           <TabsContent value="screenshots"><ScreenshotsTab /></TabsContent>
           <TabsContent value="referrals"><ReferralsTab /></TabsContent>
+          <TabsContent value="kyc"><KycTab /></TabsContent>
           <TabsContent value="promos"><PromosTab /></TabsContent>
           <TabsContent value="broadcasts"><BroadcastsTab /></TabsContent>
           <TabsContent value="logs"><LogsTab /></TabsContent>
@@ -965,5 +967,161 @@ function ReferralsTab() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+const KYC_STATUS_COLORS = {
+  pending:  { border: "#f59e0b44", color: "#f59e0b", bg: "#f59e0b22" },
+  approved: { border: "#10b98144", color: "#10b981", bg: "#10b98122" },
+  rejected: { border: "#ef444444", color: "#ef4444", bg: "#ef444422" },
+};
+
+const KYC_STATUS_ICONS = { pending: Clock, approved: ShieldCheck, rejected: ShieldAlert };
+
+function KycTab() {
+  const [rows, setRows] = useState([]);
+  const [filter, setFilter] = useState("pending");
+  const [loading, setLoading] = useState(true);
+  const [zoomedUrl, setZoomedUrl] = useState(null);
+  const [rejectState, setRejectState] = useState({ id: null, reason: "" });
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get(`/admin/kyc?status=${filter}`);
+      setRows(data.kycs || []);
+    } catch { toast.error("Failed to load KYC records"); }
+    finally { setLoading(false); }
+  }, [filter]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const approve = async (id) => {
+    try {
+      await api.post(`/admin/kyc/${id}/approve`);
+      toast.success("KYC approved. User is now verified.");
+      load();
+    } catch (e) { toast.error(formatApiError(e.response?.data?.detail) || e.message); }
+  };
+
+  const reject = async () => {
+    if (!rejectState.id) return;
+    if (!rejectState.reason.trim()) return toast.error("Enter a rejection reason");
+    try {
+      await api.post(`/admin/kyc/${rejectState.id}/reject`, { reason: rejectState.reason });
+      toast.success("KYC rejected.");
+      setRejectState({ id: null, reason: "" });
+      load();
+    } catch (e) { toast.error(formatApiError(e.response?.data?.detail) || e.message); }
+  };
+
+  return (
+    <Card className="glass-strong border-white/10 text-white mt-5">
+      <CardHeader className="flex flex-row items-center gap-3 flex-wrap">
+        <CardTitle>KYC Verifications</CardTitle>
+        <div className="flex gap-2 ml-auto flex-wrap">
+          {["pending","approved","rejected","any"].map(s => (
+            <Button key={s} size="sm" onClick={() => setFilter(s)} variant="outline"
+              className={`rounded-full capitalize border-white/20 ${filter === s ? "bg-purple-600 border-purple-600 text-white" : "bg-white/5 text-slate-300"}`}
+              data-testid={`kyc-filter-${s}`}>
+              {s}
+            </Button>
+          ))}
+          <Button size="sm" onClick={load} variant="outline" className="rounded-full border-white/20 bg-white/5 text-slate-300" data-testid="kyc-refresh">Refresh</Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="text-slate-400 text-center py-10">Loading…</div>
+        ) : rows.length === 0 ? (
+          <div className="text-slate-500 text-center py-10 border border-white/5 rounded-xl">No {filter} KYC submissions.</div>
+        ) : (
+          <div className="flex flex-col gap-5">
+            {rows.map(k => {
+              const sc = KYC_STATUS_COLORS[k.status] || KYC_STATUS_COLORS.pending;
+              const StatusIcon = KYC_STATUS_ICONS[k.status] || Clock;
+              const backendBase = (window.location.hostname === "localhost") ? "http://localhost:5000" : "";
+              const docUrl = (path) => path ? `${backendBase}/uploads/kyc/${path.split("/").pop()}` : null;
+              return (
+                <div key={k.id} className="rounded-2xl bg-black/30 border border-white/10 p-5" data-testid={`kyc-row-${k.id}`}>
+                  <div className="flex justify-between items-start flex-wrap gap-3 mb-4">
+                    <div>
+                      <div className="font-semibold text-base">{k.user?.name || "Unknown"}
+                        <span className="text-slate-400 text-sm font-normal ml-2">{k.user?.email}</span>
+                      </div>
+                      <div className="text-slate-400 text-sm mt-1">
+                        Aadhaar: <span className="font-mono text-white">{k.aadhaar_number || "—"}</span>
+                        <span className="mx-2 text-slate-600">·</span>
+                        PAN: <span className="font-mono text-white">{k.pan_number || "—"}</span>
+                      </div>
+                      <div className="text-slate-500 text-xs mt-1">{new Date(k.createdAt).toLocaleString("en-IN")}</div>
+                    </div>
+                    <Badge variant="outline" style={{ borderColor: sc.border, color: sc.color, background: sc.bg }} className="uppercase text-xs font-bold px-3 py-1 flex items-center gap-1">
+                      <StatusIcon className="w-3 h-3" /> {k.status}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                    {[
+                      { label: "Aadhaar Front", url: docUrl(k.aadhaar_front) },
+                      { label: "Aadhaar Back", url: docUrl(k.aadhaar_back) },
+                      { label: "PAN Card", url: docUrl(k.pan_card) },
+                    ].map(doc => (
+                      <div key={doc.label}>
+                        <div className="text-xs text-slate-400 mb-1">{doc.label}</div>
+                        {doc.url ? (
+                          <div className="relative cursor-zoom-in" onClick={() => setZoomedUrl(doc.url)}>
+                            <img src={doc.url} alt={doc.label}
+                              className="w-full h-28 object-contain rounded-xl border border-white/10 bg-black/40" />
+                            <button className="absolute top-1 right-1 bg-black/60 rounded-full p-1 text-white">
+                              <ZoomIn className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-full h-28 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-slate-500 text-xs">Not provided</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {k.admin_note && (
+                    <div className="mb-3 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
+                      Rejection reason: {k.admin_note}
+                    </div>
+                  )}
+
+                  {k.status === "pending" && (
+                    <div className="flex flex-wrap gap-2">
+                      <Button onClick={() => approve(k.id)} className="rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold" data-testid={`kyc-approve-${k.id}`}>
+                        ✅ Approve KYC
+                      </Button>
+                      <Button onClick={() => setRejectState({ id: k.id, reason: "" })} variant="outline" className="rounded-full border-red-500/30 text-red-300 bg-red-500/10" data-testid={`kyc-reject-${k.id}`}>
+                        ❌ Reject
+                      </Button>
+                    </div>
+                  )}
+
+                  {rejectState.id === k.id && (
+                    <div className="mt-3 flex gap-2 flex-wrap">
+                      <Input value={rejectState.reason} onChange={e => setRejectState(p => ({ ...p, reason: e.target.value }))}
+                        placeholder="Rejection reason (required)" className="flex-1 bg-black/40 border-red-500/30 text-white min-w-[200px]" data-testid="kyc-reject-reason" />
+                      <Button onClick={reject} className="rounded-full bg-red-500 text-white font-bold" data-testid="kyc-reject-confirm">Confirm</Button>
+                      <Button onClick={() => setRejectState({ id: null, reason: "" })} variant="outline" className="rounded-full border-white/20 bg-white/5 text-slate-300">Cancel</Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+
+      {zoomedUrl && (
+        <div onClick={() => setZoomedUrl(null)} className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 cursor-zoom-out p-4">
+          <img src={zoomedUrl} alt="KYC document zoom" className="max-w-[95vw] max-h-[90vh] rounded-xl object-contain" />
+          <button onClick={() => setZoomedUrl(null)} className="fixed top-5 right-5 bg-white/10 rounded-full w-9 h-9 grid place-items-center text-white text-lg">✕</button>
+        </div>
+      )}
+    </Card>
   );
 }

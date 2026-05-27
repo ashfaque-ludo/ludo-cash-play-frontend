@@ -23,6 +23,9 @@ import CreateRoom from "@/pages/CreateRoom";
 import RoomGen from "@/pages/RoomGen";
 import AdminScreenshots from "@/pages/AdminScreenshots";
 import Withdraw from "@/pages/Withdraw";
+import History from "@/pages/History";
+import Profile from "@/pages/Profile";
+import KYC from "@/pages/KYC";
 
 export default function App() {
   return (
@@ -43,6 +46,9 @@ export default function App() {
           <Route path="/referral" element={<ProtectedRoute><Referral /></ProtectedRoute>} />
           <Route path="/upload-screenshot" element={<ProtectedRoute><ScreenshotUpload /></ProtectedRoute>} />
           <Route path="/withdraw" element={<ProtectedRoute><Withdraw /></ProtectedRoute>} />
+          <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/kyc" element={<ProtectedRoute><KYC /></ProtectedRoute>} />
           <Route path="/create-room" element={<ProtectedRoute><CreateRoom /></ProtectedRoute>} />
           <Route path="/room-gen" element={<ProtectedRoute><RoomGen /></ProtectedRoute>} />
 

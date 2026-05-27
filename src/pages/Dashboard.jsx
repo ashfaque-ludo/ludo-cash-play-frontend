@@ -5,7 +5,7 @@ import { api, fmtINR } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wallet as WalletIcon, Dice5, Trophy, Users, Sparkles, Crown, ArrowRight, ShieldCheck, Camera, ArrowDownToLine } from "lucide-react";
+import { Wallet as WalletIcon, Dice5, Trophy, Users, Sparkles, Crown, ArrowRight, ShieldCheck, Camera, ArrowDownToLine, Clock, User } from "lucide-react";
 
 export default function Dashboard() {
   const { user, refresh } = useAuth();
@@ -45,6 +45,8 @@ export default function Dashboard() {
             <Link to="/upload-screenshot" data-testid="dash-upload-screenshot"><Button variant="outline" className="rounded-full border-purple-500/30 bg-purple-500/10 text-purple-300"><Camera className="w-4 h-4 mr-2" /> Claim Prize</Button></Link>
             <Link to="/withdraw" data-testid="dash-withdraw"><Button variant="outline" className="rounded-full border-emerald-500/30 bg-emerald-500/10 text-emerald-300"><ArrowDownToLine className="w-4 h-4 mr-2" /> Withdraw</Button></Link>
             <Link to="/wallet" data-testid="dash-wallet"><Button variant="outline" className="rounded-full border-white/20 bg-white/5 text-white"><WalletIcon className="w-4 h-4 mr-2" /> Wallet</Button></Link>
+            <Link to="/history" data-testid="dash-history"><Button variant="outline" className="rounded-full border-white/20 bg-white/5 text-white"><Clock className="w-4 h-4 mr-2" /> History</Button></Link>
+            <Link to="/profile" data-testid="dash-profile"><Button variant="outline" className="rounded-full border-white/20 bg-white/5 text-white"><User className="w-4 h-4 mr-2" /> Profile</Button></Link>
           </div>
         </div>
 
