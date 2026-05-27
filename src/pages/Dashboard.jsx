@@ -5,7 +5,7 @@ import { api, fmtINR } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wallet as WalletIcon, Dice5, Trophy, Users, Sparkles, Crown, ArrowRight, ShieldCheck } from "lucide-react";
+import { Wallet as WalletIcon, Dice5, Trophy, Users, Sparkles, Crown, ArrowRight, ShieldCheck, Camera } from "lucide-react";
 
 export default function Dashboard() {
   const { user, refresh } = useAuth();
@@ -40,8 +40,9 @@ export default function Dashboard() {
             <h1 className="text-3xl sm:text-4xl font-extrabold mt-1">Hello, <span className="grad-text">{user.name || "Player"}</span></h1>
             <p className="text-slate-400 mt-1 text-sm">Your gaming dashboard</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Link to="/play" data-testid="dash-play"><Button className="rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold"><Dice5 className="w-4 h-4 mr-2" /> Play Now</Button></Link>
+            <Link to="/upload-screenshot" data-testid="dash-upload-screenshot"><Button variant="outline" className="rounded-full border-purple-500/30 bg-purple-500/10 text-purple-300"><Camera className="w-4 h-4 mr-2" /> Claim Prize</Button></Link>
             <Link to="/wallet" data-testid="dash-wallet"><Button variant="outline" className="rounded-full border-white/20 bg-white/5 text-white"><WalletIcon className="w-4 h-4 mr-2" /> Wallet</Button></Link>
           </div>
         </div>

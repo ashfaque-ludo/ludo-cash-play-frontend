@@ -21,6 +21,7 @@ import AdminRecharges from "@/pages/AdminRecharges";
 import ScreenshotUpload from "@/pages/ScreenshotUpload";
 import CreateRoom from "@/pages/CreateRoom";
 import RoomGen from "@/pages/RoomGen";
+import AdminScreenshots from "@/pages/AdminScreenshots";
 
 export default function App() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
 
           <Route path="/admin" element={<ProtectedRoute requireRole="support_agent"><Admin /></ProtectedRoute>} />
           <Route path="/admin/recharges" element={<ProtectedRoute requireRole="support_agent"><AdminRecharges /></ProtectedRoute>} />
+          <Route path="/admin/screenshots" element={<ProtectedRoute requireRole="support_agent"><AdminScreenshots /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

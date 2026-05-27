@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { api, fmtINR, formatApiError } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import {
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { ShieldCheck, Users, Wallet as WalletIcon, ArrowDownToLine, Trophy, Tag, Megaphone, BarChart3, FileText, Lock, Ban, KeyRound, Settings, Layers, UserPlus, Trash2 } from "lucide-react";
+import { ShieldCheck, Users, Wallet as WalletIcon, ArrowDownToLine, Trophy, Tag, Megaphone, BarChart3, FileText, Lock, Ban, KeyRound, Settings, Layers, UserPlus, Trash2, Camera, ZoomIn } from "lucide-react";
 import { toast } from "sonner";
 
 const ROLES = ["user", "support_agent", "staff_manager", "admin", "super_admin"];
@@ -45,6 +45,7 @@ export default function Admin() {
             {can("staff_manager") && <TabsTrigger value="deposits" data-testid="tab-deposits"><WalletIcon className="w-3.5 h-3.5 mr-1" /> Deposits</TabsTrigger>}
             {can("staff_manager") && <TabsTrigger value="withdrawals" data-testid="tab-withdrawals"><ArrowDownToLine className="w-3.5 h-3.5 mr-1" /> Withdrawals</TabsTrigger>}
             <TabsTrigger value="matches" data-testid="tab-matches"><Trophy className="w-3.5 h-3.5 mr-1" /> Matches</TabsTrigger>
+            <TabsTrigger value="screenshots" data-testid="tab-screenshots"><Camera className="w-3.5 h-3.5 mr-1" /> Screenshots</TabsTrigger>
             {can("admin") && <TabsTrigger value="promos" data-testid="tab-promos"><Tag className="w-3.5 h-3.5 mr-1" /> Promos</TabsTrigger>}
             {can("admin") && <TabsTrigger value="broadcasts" data-testid="tab-broadcasts"><Megaphone className="w-3.5 h-3.5 mr-1" /> Broadcasts</TabsTrigger>}
             {can("admin") && <TabsTrigger value="logs" data-testid="tab-logs"><FileText className="w-3.5 h-3.5 mr-1" /> Logs</TabsTrigger>}
@@ -58,6 +59,7 @@ export default function Admin() {
           <TabsContent value="deposits"><DepositsTab /></TabsContent>
           <TabsContent value="withdrawals"><WithdrawalsTab /></TabsContent>
           <TabsContent value="matches"><MatchesTab actor={user} /></TabsContent>
+          <TabsContent value="screenshots"><ScreenshotsTab /></TabsContent>
           <TabsContent value="promos"><PromosTab /></TabsContent>
           <TabsContent value="broadcasts"><BroadcastsTab /></TabsContent>
           <TabsContent value="logs"><LogsTab /></TabsContent>
@@ -676,6 +678,137 @@ function StaffTab(){
           </TableBody>
         </Table>
       </CardContent>
+    </Card>
+  );
+}
+
+const SS_STATUS_COLORS = { pending:"#f59e0b", approved:"#10b981", rejected:"#ef4444" };
+
+function ScreenshotsTab() {
+  const [screenshots, setScreenshots] = useState([]);
+  const [filter, setFilter] = useState("pending");
+  const [loading, setLoading] = useState(true);
+  const [zoomedUrl, setZoomedUrl] = useState(null);
+  const [rejectState, setRejectState] = useState({ id: null, reason: "" });
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get(`/admin/screenshots?status=${filter}`);
+      setScreenshots(data.screenshots || []);
+    } catch { toast.error("Failed to load screenshots"); }
+    finally { setLoading(false); }
+  }, [filter]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const approve = async (id) => {
+    try {
+      const { data } = await api.post(`/admin/screenshots/${id}/approve`);
+      toast.success(`Approved! ₹${data.net_prize_credited} credited to winner's wallet.`);
+      load();
+    } catch (e) { toast.error(e.response?.data?.detail || "Approve failed"); }
+  };
+
+  const reject = async () => {
+    if (!rejectState.id) return;
+    if (!rejectState.reason.trim()) return toast.error("Enter a rejection reason");
+    try {
+      await api.post(`/admin/screenshots/${rejectState.id}/reject`, { reason: rejectState.reason });
+      toast.success("Screenshot rejected.");
+      setRejectState({ id: null, reason: "" });
+      load();
+    } catch (e) { toast.error(e.response?.data?.detail || "Reject failed"); }
+  };
+
+  return (
+    <Card className="glass-strong border-white/10 text-white mt-5">
+      <CardHeader className="flex flex-row items-center gap-3 flex-wrap">
+        <CardTitle>Screenshot Reviews</CardTitle>
+        <div className="flex gap-2 ml-auto flex-wrap">
+          {["pending","approved","rejected","any"].map(s => (
+            <Button key={s} size="sm" onClick={() => setFilter(s)} variant="outline"
+              className={`rounded-full capitalize border-white/20 ${filter === s ? "bg-purple-600 border-purple-600 text-white" : "bg-white/5 text-slate-300"}`}
+              data-testid={`ss-filter-${s}`}>
+              {s}
+            </Button>
+          ))}
+          <Button size="sm" onClick={load} variant="outline" className="rounded-full border-white/20 bg-white/5 text-slate-300" data-testid="ss-refresh">Refresh</Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="text-slate-400 text-center py-10">Loading…</div>
+        ) : screenshots.length === 0 ? (
+          <div className="text-slate-500 text-center py-10 border border-white/5 rounded-xl">No {filter} screenshots found.</div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {screenshots.map(ss => (
+              <div key={ss.id} className="rounded-2xl bg-black/30 border border-white/10 p-5" data-testid={`ss-row-${ss.id}`}>
+                <div className="flex justify-between items-start flex-wrap gap-3 mb-4">
+                  <div>
+                    <div className="font-semibold">{ss.user?.name || "Unknown"} <span className="text-slate-400 text-sm font-normal">{ss.user?.email}</span></div>
+                    {ss.match_id && <div className="text-slate-400 text-xs mt-0.5">Match: {ss.match_id}</div>}
+                    <div className="flex gap-4 mt-1 text-sm flex-wrap">
+                      <span className="text-amber-400">Claimed: ₹{ss.amount || 0}</span>
+                      <span className="text-emerald-400">Net (−10%): ₹{ss.net_prize || 0}</span>
+                    </div>
+                    <div className="text-slate-500 text-xs mt-1">{new Date(ss.created_at).toLocaleString("en-IN")}</div>
+                  </div>
+                  <Badge variant="outline" style={{ borderColor: SS_STATUS_COLORS[ss.status] + "44", color: SS_STATUS_COLORS[ss.status], background: SS_STATUS_COLORS[ss.status] + "22" }} className="uppercase text-xs font-bold px-3 py-1">
+                    {ss.status}
+                  </Badge>
+                </div>
+
+                {ss.url && (
+                  <div className="mb-4">
+                    <div className="relative inline-block w-full">
+                      <img src={ss.url} alt="Match screenshot" onClick={() => setZoomedUrl(ss.url)}
+                        className="w-full max-h-64 object-contain rounded-xl border border-white/10 bg-black/40 cursor-zoom-in" />
+                      <button onClick={() => setZoomedUrl(ss.url)} className="absolute top-2 right-2 bg-black/60 rounded-full p-1.5 text-white">
+                        <ZoomIn className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {ss.admin_note && (
+                  <div className="mb-3 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
+                    Rejection reason: {ss.admin_note}
+                  </div>
+                )}
+
+                {ss.status === "pending" && (
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={() => approve(ss.id)} className="rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold" data-testid={`ss-approve-${ss.id}`}>
+                      ✅ Approve (+₹{ss.net_prize || 0})
+                    </Button>
+                    <Button onClick={() => setRejectState({ id: ss.id, reason: "" })} variant="outline" className="rounded-full border-red-500/30 text-red-300 bg-red-500/10" data-testid={`ss-reject-${ss.id}`}>
+                      ❌ Reject
+                    </Button>
+                  </div>
+                )}
+
+                {rejectState.id === ss.id && (
+                  <div className="mt-3 flex gap-2 flex-wrap">
+                    <Input value={rejectState.reason} onChange={e => setRejectState(p => ({ ...p, reason: e.target.value }))}
+                      placeholder="Rejection reason (required)" className="flex-1 bg-black/40 border-red-500/30 text-white min-w-[200px]" data-testid="ss-reject-reason" />
+                    <Button onClick={reject} className="rounded-full bg-red-500 text-white font-bold" data-testid="ss-reject-confirm">Confirm</Button>
+                    <Button onClick={() => setRejectState({ id: null, reason: "" })} variant="outline" className="rounded-full border-white/20 bg-white/5 text-slate-300">Cancel</Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+
+      {zoomedUrl && (
+        <div onClick={() => setZoomedUrl(null)} className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 cursor-zoom-out p-4">
+          <img src={zoomedUrl} alt="Screenshot zoom" className="max-w-[95vw] max-h-[90vh] rounded-xl object-contain" />
+          <button onClick={() => setZoomedUrl(null)} className="fixed top-5 right-5 bg-white/10 rounded-full w-9 h-9 grid place-items-center text-white text-lg">✕</button>
+        </div>
+      )}
     </Card>
   );
 }
