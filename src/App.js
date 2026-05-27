@@ -22,6 +22,7 @@ import ScreenshotUpload from "@/pages/ScreenshotUpload";
 import CreateRoom from "@/pages/CreateRoom";
 import RoomGen from "@/pages/RoomGen";
 import AdminScreenshots from "@/pages/AdminScreenshots";
+import Withdraw from "@/pages/Withdraw";
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
           <Route path="/referral" element={<ProtectedRoute><Referral /></ProtectedRoute>} />
           <Route path="/upload-screenshot" element={<ProtectedRoute><ScreenshotUpload /></ProtectedRoute>} />
+          <Route path="/withdraw" element={<ProtectedRoute><Withdraw /></ProtectedRoute>} />
           <Route path="/create-room" element={<ProtectedRoute><CreateRoom /></ProtectedRoute>} />
           <Route path="/room-gen" element={<ProtectedRoute><RoomGen /></ProtectedRoute>} />
 

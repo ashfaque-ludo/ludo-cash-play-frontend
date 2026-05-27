@@ -323,41 +323,88 @@ function DepositsTab(){
 function WithdrawalsTab(){
   const [rows, setRows] = useState([]);
   const [status, setStatus] = useState("pending");
-  const load = async () => { try { const r = await api.get(`/admin/withdrawals?status=${status}`); setRows(r.data.withdrawals); } catch {} };
-  useEffect(()=>{ load(); /* eslint-disable-line */ }, [status]);
-  const act = async (id, action) => {
-    try { await api.post(`/admin/withdrawals/${id}/${action}`); toast.success(`Withdrawal ${action}d`); load(); }
+  const [rejectState, setRejectState] = useState({ id: null, reason: "" });
+  const load = useCallback(async () => { try { const r = await api.get(`/admin/withdrawals?status=${status}`); setRows(r.data.withdrawals); } catch {} }, [status]);
+  useEffect(()=>{ load(); }, [load]);
+
+  const approve = async (id) => {
+    try { await api.post(`/admin/withdrawals/${id}/approve`); toast.success("Withdrawal approved. Send payment via UPI now."); load(); }
     catch (e) { toast.error(formatApiError(e.response?.data?.detail) || e.message); }
   };
+
+  const reject = async () => {
+    if (!rejectState.id) return;
+    if (!rejectState.reason.trim()) return toast.error("Enter a rejection reason");
+    try {
+      await api.post(`/admin/withdrawals/${rejectState.id}/reject`, { reason: rejectState.reason });
+      toast.success("Withdrawal rejected. Amount refunded to user's wallet.");
+      setRejectState({ id: null, reason: "" });
+      load();
+    } catch (e) { toast.error(formatApiError(e.response?.data?.detail) || e.message); }
+  };
+
   return (
     <Card className="glass-strong border-white/10 text-white mt-5">
-      <CardHeader className="flex flex-row items-center"><CardTitle>Withdrawals</CardTitle>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="ml-auto bg-black/40 border-white/10 text-white w-40" data-testid="withdraw-status-filter"><SelectValue /></SelectTrigger>
-          <SelectContent className="bg-[#0F0F14] border-white/10 text-white">
-            {["pending","approved","rejected"].map(s=> <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
+      <CardHeader className="flex flex-row items-center flex-wrap gap-3">
+        <CardTitle>Withdrawals</CardTitle>
+        <div className="flex gap-2 ml-auto flex-wrap">
+          {["pending","approved","rejected","any"].map(s=>(
+            <Button key={s} size="sm" onClick={()=>setStatus(s)} variant="outline"
+              className={`rounded-full capitalize border-white/20 ${status===s ? "bg-purple-600 border-purple-600 text-white" : "bg-white/5 text-slate-300"}`}
+              data-testid={`wd-filter-${s}`}>{s}</Button>
+          ))}
+          <Button size="sm" onClick={load} variant="outline" className="rounded-full border-white/20 bg-white/5 text-slate-300">Refresh</Button>
+        </div>
       </CardHeader>
       <CardContent className="overflow-x-auto">
         <Table>
-          <TableHeader><TableRow className="border-white/10"><TableHead>User</TableHead><TableHead>Amount</TableHead><TableHead>UPI</TableHead><TableHead>Created</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow className="border-white/10">
+            <TableHead>User</TableHead>
+            <TableHead>Amount</TableHead>
+            <TableHead>UPI ID</TableHead>
+            <TableHead>Requested</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow></TableHeader>
           <TableBody>
             {rows.map(d => (
-              <TableRow key={d.id} className="border-white/10" data-testid={`withdraw-row-${d.id}`}>
-                <TableCell className="text-slate-300">{d.user_email}</TableCell>
-                <TableCell className="font-bold text-red-300">{fmtINR(d.amount)}</TableCell>
-                <TableCell>{d.upi_id}</TableCell>
-                <TableCell className="text-xs text-slate-400">{new Date(d.created_at).toLocaleString("en-IN")}</TableCell>
-                <TableCell className="space-x-1">
-                  {d.status === "pending" && <>
-                    <Button size="sm" onClick={()=>act(d.id, "approve")} className="rounded-full bg-emerald-500 text-black font-bold" data-testid={`approve-w-${d.id}`}>Approve</Button>
-                    <Button size="sm" onClick={()=>act(d.id, "reject")} variant="outline" className="rounded-full border-red-500/30 text-red-300" data-testid={`reject-w-${d.id}`}>Reject</Button>
-                  </>}
-                </TableCell>
-              </TableRow>
+              <React.Fragment key={d.id}>
+                <TableRow className="border-white/10" data-testid={`withdraw-row-${d.id}`}>
+                  <TableCell>
+                    <div className="font-medium">{d.user?.name || d.user_email}</div>
+                    <div className="text-xs text-slate-400">{d.user?.email || d.user_email}</div>
+                  </TableCell>
+                  <TableCell className="font-bold text-purple-300">{fmtINR(d.amount)}</TableCell>
+                  <TableCell className="text-slate-300 font-mono text-sm">{d.upi_id}</TableCell>
+                  <TableCell className="text-xs text-slate-400">{new Date(d.created_at).toLocaleString("en-IN")}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={`uppercase text-xs font-bold px-2 py-0.5 ${d.status==="approved" ? "border-emerald-500/40 text-emerald-300" : d.status==="rejected" ? "border-red-500/40 text-red-300" : "border-amber-500/40 text-amber-300"}`}>
+                      {d.status}
+                    </Badge>
+                    {d.admin_note && <div className="text-xs text-red-400 mt-1 max-w-[160px]">{d.admin_note}</div>}
+                  </TableCell>
+                  <TableCell className="space-x-1">
+                    {d.status === "pending" && <>
+                      <Button size="sm" onClick={()=>approve(d.id)} className="rounded-full bg-emerald-500 text-black font-bold" data-testid={`approve-w-${d.id}`}>✓ Approve</Button>
+                      <Button size="sm" onClick={()=>setRejectState({id:d.id,reason:""})} variant="outline" className="rounded-full border-red-500/30 text-red-300 bg-red-500/10" data-testid={`reject-w-${d.id}`}>✗ Reject</Button>
+                    </>}
+                  </TableCell>
+                </TableRow>
+                {rejectState.id === d.id && (
+                  <TableRow className="border-white/5 bg-red-500/5">
+                    <TableCell colSpan={6} className="py-3">
+                      <div className="flex gap-2 flex-wrap items-center">
+                        <Input value={rejectState.reason} onChange={e=>setRejectState(p=>({...p,reason:e.target.value}))}
+                          placeholder="Rejection reason (required)" className="flex-1 bg-black/40 border-red-500/30 text-white min-w-[220px]" data-testid="wd-reject-reason" />
+                        <Button onClick={reject} className="rounded-full bg-red-500 text-white font-bold" data-testid="wd-reject-confirm">Confirm Reject</Button>
+                        <Button onClick={()=>setRejectState({id:null,reason:""})} variant="outline" className="rounded-full border-white/20 bg-white/5 text-slate-300">Cancel</Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </React.Fragment>
             ))}
-            {rows.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-slate-500 py-6">No withdrawals.</TableCell></TableRow>}
+            {rows.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-slate-500 py-6">No {status} withdrawals.</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent>
