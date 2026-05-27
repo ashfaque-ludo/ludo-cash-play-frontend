@@ -16,7 +16,7 @@ import {
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { ShieldCheck, Users, Wallet as WalletIcon, ArrowDownToLine, Trophy, Tag, Megaphone, BarChart3, FileText, Lock, Ban, KeyRound, Settings, Layers, UserPlus, Trash2, Camera, ZoomIn } from "lucide-react";
+import { ShieldCheck, Users, Wallet as WalletIcon, ArrowDownToLine, Trophy, Tag, Megaphone, BarChart3, FileText, Lock, Ban, KeyRound, Settings, Layers, UserPlus, Trash2, Camera, ZoomIn, Share2 } from "lucide-react";
 import { toast } from "sonner";
 
 const ROLES = ["user", "support_agent", "staff_manager", "admin", "super_admin"];
@@ -46,6 +46,7 @@ export default function Admin() {
             {can("staff_manager") && <TabsTrigger value="withdrawals" data-testid="tab-withdrawals"><ArrowDownToLine className="w-3.5 h-3.5 mr-1" /> Withdrawals</TabsTrigger>}
             <TabsTrigger value="matches" data-testid="tab-matches"><Trophy className="w-3.5 h-3.5 mr-1" /> Matches</TabsTrigger>
             <TabsTrigger value="screenshots" data-testid="tab-screenshots"><Camera className="w-3.5 h-3.5 mr-1" /> Screenshots</TabsTrigger>
+            <TabsTrigger value="referrals" data-testid="tab-referrals"><Share2 className="w-3.5 h-3.5 mr-1" /> Referrals</TabsTrigger>
             {can("admin") && <TabsTrigger value="promos" data-testid="tab-promos"><Tag className="w-3.5 h-3.5 mr-1" /> Promos</TabsTrigger>}
             {can("admin") && <TabsTrigger value="broadcasts" data-testid="tab-broadcasts"><Megaphone className="w-3.5 h-3.5 mr-1" /> Broadcasts</TabsTrigger>}
             {can("admin") && <TabsTrigger value="logs" data-testid="tab-logs"><FileText className="w-3.5 h-3.5 mr-1" /> Logs</TabsTrigger>}
@@ -60,6 +61,7 @@ export default function Admin() {
           <TabsContent value="withdrawals"><WithdrawalsTab /></TabsContent>
           <TabsContent value="matches"><MatchesTab actor={user} /></TabsContent>
           <TabsContent value="screenshots"><ScreenshotsTab /></TabsContent>
+          <TabsContent value="referrals"><ReferralsTab /></TabsContent>
           <TabsContent value="promos"><PromosTab /></TabsContent>
           <TabsContent value="broadcasts"><BroadcastsTab /></TabsContent>
           <TabsContent value="logs"><LogsTab /></TabsContent>
@@ -857,5 +859,111 @@ function ScreenshotsTab() {
         </div>
       )}
     </Card>
+  );
+}
+
+function ReferralsTab() {
+  const [refs, setRefs] = useState([]);
+  const [top, setTop] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [r, t] = await Promise.all([
+        api.get("/admin/referrals"),
+        api.get("/admin/referrals/top"),
+      ]);
+      setRefs(r.data.referrals || []);
+      setTop(t.data.top || []);
+    } catch { toast.error("Failed to load referrals"); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  return (
+    <div className="mt-5 space-y-6">
+      {/* Top referrers */}
+      <Card className="glass-strong border-white/10 text-white">
+        <CardHeader className="flex flex-row items-center">
+          <CardTitle>Top Referrers</CardTitle>
+          <Button size="sm" onClick={load} variant="outline" className="ml-auto rounded-full border-white/20 bg-white/5 text-slate-300">Refresh</Button>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <Table>
+            <TableHeader><TableRow className="border-white/10">
+              <TableHead>#</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Referrals</TableHead>
+              <TableHead>Total Earned</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {top.map((u, i) => (
+                <TableRow key={u._id} className="border-white/10">
+                  <TableCell className="text-amber-400 font-bold">{i + 1}</TableCell>
+                  <TableCell className="font-medium">{u.name}</TableCell>
+                  <TableCell className="text-slate-400 text-sm">{u.email}</TableCell>
+                  <TableCell>{u.count}</TableCell>
+                  <TableCell className="text-emerald-400 font-bold">{fmtINR(u.total_earned)}</TableCell>
+                </TableRow>
+              ))}
+              {top.length === 0 && !loading && (
+                <TableRow><TableCell colSpan={5} className="text-center text-slate-500 py-6">No referrals yet.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* All referrals */}
+      <Card className="glass-strong border-white/10 text-white">
+        <CardHeader>
+          <CardTitle>All Referrals</CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          {loading ? (
+            <div className="text-slate-400 text-center py-8">Loading…</div>
+          ) : (
+            <Table>
+              <TableHeader><TableRow className="border-white/10">
+                <TableHead>Referrer</TableHead>
+                <TableHead>Referred</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>Commission</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {refs.map(r => (
+                  <TableRow key={r.id} className="border-white/10" data-testid={`ref-row-${r.id}`}>
+                    <TableCell>
+                      <div className="font-medium text-sm">{r.referrer?.name}</div>
+                      <div className="text-xs text-slate-400">{r.referrer?.email}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium text-sm">{r.referred?.name}</div>
+                      <div className="text-xs text-slate-400">{r.referred?.email}</div>
+                    </TableCell>
+                    <TableCell className="font-mono text-sm text-purple-300">{r.referral_code}</TableCell>
+                    <TableCell className="text-emerald-400 font-bold">{fmtINR(r.commission_earned)}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={r.status === "credited" ? "border-emerald-500/30 text-emerald-300" : "border-amber-500/30 text-amber-300"}>
+                        {r.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-400">{new Date(r.created_at).toLocaleDateString("en-IN")}</TableCell>
+                  </TableRow>
+                ))}
+                {refs.length === 0 && (
+                  <TableRow><TableCell colSpan={6} className="text-center text-slate-500 py-6">No referrals recorded.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
