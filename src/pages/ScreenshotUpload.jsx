@@ -1,9 +1,11 @@
 import React, { useState, useRef, useCallback } from "react";
 import { api } from "@/lib/api";
-import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Camera, Upload, CheckCircle2, XCircle, X, Sparkles } from "lucide-react";
 
 export default function ScreenshotUpload() {
-  const { user } = useAuth();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [matchId, setMatchId] = useState("");
@@ -15,189 +17,168 @@ export default function ScreenshotUpload() {
 
   const pickFile = (selected) => {
     if (!selected) return;
-    if (selected.size > 5 * 1024 * 1024) {
-      setMessage({ text: "File too large. Max 5MB.", ok: false });
-      return;
-    }
-    if (!selected.type.startsWith("image/")) {
-      setMessage({ text: "Only image files allowed.", ok: false });
-      return;
-    }
+    if (selected.size > 5 * 1024 * 1024) { setMessage({ text: "File too large. Max 5 MB.", ok: false }); return; }
+    if (!selected.type.startsWith("image/")) { setMessage({ text: "Only image files allowed.", ok: false }); return; }
     setFile(selected);
     setPreview(URL.createObjectURL(selected));
     setMessage({ text: "", ok: true });
   };
 
-  const onDrop = useCallback((e) => {
-    e.preventDefault();
-    setDragging(false);
-    pickFile(e.dataTransfer.files[0]);
-  }, []);
-
+  const onDrop = useCallback((e) => { e.preventDefault(); setDragging(false); pickFile(e.dataTransfer.files[0]); }, []);
   const onDragOver = (e) => { e.preventDefault(); setDragging(true); };
   const onDragLeave = () => setDragging(false);
 
   const handleUpload = async () => {
-    if (!file) return setMessage({ text: "Please select a screenshot first.", ok: false });
-
+    if (!file) { setMessage({ text: "Please select a screenshot first.", ok: false }); return; }
     setUploading(true);
     setMessage({ text: "", ok: true });
-
     const formData = new FormData();
     formData.append("screenshot", file);
     if (matchId.trim()) formData.append("match_id", matchId.trim());
     if (amount) formData.append("amount", amount);
-
     try {
-      await api.post("/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await api.post("/upload", formData, { headers: { "Content-Type": "multipart/form-data" } });
       setMessage({ text: "Screenshot uploaded! Pending admin review.", ok: true });
-      setFile(null);
-      setPreview(null);
-      setMatchId("");
-      setAmount("");
+      setFile(null); setPreview(null); setMatchId(""); setAmount("");
     } catch (err) {
       setMessage({ text: "Upload failed: " + (err.response?.data?.error || err.message), ok: false });
     }
-
     setUploading(false);
   };
 
-  return (
-    <div style={{ minHeight: "100vh", background: "#0A0A0E", padding: "80px 20px", color: "#fff" }}>
-      <div style={{ maxWidth: 520, margin: "0 auto" }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, textAlign: "center", marginBottom: 8 }}>
-          Upload Match Screenshot
-        </h1>
-        <p style={{ textAlign: "center", color: "#94a3b8", marginBottom: 32, fontSize: 14 }}>
-          Upload your winning screenshot for admin review. Prize money is credited after approval.
-        </p>
+  const commission = amount ? (parseFloat(amount) * 0.9).toFixed(2) : null;
 
-        <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 16, padding: 28, border: "1px solid rgba(255,255,255,0.1)" }}>
-          {/* Drag-drop zone */}
+  return (
+    <div className="min-h-screen pt-24 pb-16 bg-[#0A0A0E] text-white">
+      <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
+      <div className="relative max-w-lg mx-auto px-4">
+        {/* Page header */}
+        <div className="text-center mb-8 fade-up">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 grid place-items-center mx-auto mb-4 shadow-[0_0_30px_rgba(147,51,234,0.5)]">
+            <Camera className="w-7 h-7 text-white" />
+          </div>
+          <h1 className="text-3xl font-black">Upload Screenshot</h1>
+          <p className="text-slate-400 mt-2 text-sm">Submit your winning screenshot for admin review. Prize is credited after approval.</p>
+        </div>
+
+        <div className="glass-strong rounded-3xl border border-white/10 p-6 fade-up delay-1">
+          {/* Drop zone */}
           <div
             onDrop={onDrop}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onClick={() => inputRef.current?.click()}
-            style={{
-              padding: "36px 20px",
-              border: `2px dashed ${dragging ? "#a855f7" : "#334155"}`,
-              borderRadius: 12,
-              textAlign: "center",
-              cursor: "pointer",
-              marginBottom: 20,
-              background: dragging ? "rgba(168,85,247,0.08)" : "transparent",
-              transition: "all 0.15s",
-            }}
+            className={`relative rounded-2xl border-2 border-dashed p-8 text-center cursor-pointer transition-all duration-200 mb-5 ${
+              dragging
+                ? "border-purple-500 bg-purple-500/10"
+                : file
+                  ? "border-emerald-500/50 bg-emerald-500/5"
+                  : "border-white/15 hover:border-purple-500/50 hover:bg-purple-500/5"
+            }`}
           >
             <input
               ref={inputRef}
               type="file"
               accept="image/*"
               onChange={(e) => pickFile(e.target.files[0])}
-              style={{ display: "none" }}
+              className="hidden"
             />
-            <div style={{ fontSize: 40, marginBottom: 10 }}>📸</div>
             {file ? (
-              <div style={{ color: "#a855f7", fontWeight: 600 }}>{file.name}</div>
+              <div className="flex items-center justify-center gap-4">
+                <div className="flex items-center gap-1.5 text-emerald-400 font-semibold text-sm">
+                  <CheckCircle2 className="w-5 h-5" /> {file.name}
+                </div>
+              </div>
             ) : (
               <>
-                <div style={{ fontWeight: 600, marginBottom: 4 }}>Drag & drop or click to select</div>
-                <div style={{ color: "#64748b", fontSize: 13 }}>PNG, JPG, WEBP · Max 5 MB</div>
+                <div className="w-12 h-12 rounded-2xl bg-white/5 grid place-items-center mx-auto mb-3">
+                  <Upload className="w-6 h-6 text-slate-400" />
+                </div>
+                <div className="font-semibold text-slate-300">Drag & drop or tap to select</div>
+                <div className="text-xs text-slate-500 mt-1">PNG, JPG, WEBP · Max 5 MB</div>
               </>
             )}
           </div>
 
           {/* Preview */}
           {preview && (
-            <div style={{ marginBottom: 20 }}>
+            <div className="mb-5 relative">
               <img
                 src={preview}
                 alt="Preview"
-                style={{ width: "100%", borderRadius: 8, border: "1px solid rgba(168,85,247,0.4)", maxHeight: 300, objectFit: "contain" }}
+                className="w-full rounded-2xl border border-purple-500/30 max-h-64 object-contain bg-black/40"
               />
               <button
                 onClick={() => { setFile(null); setPreview(null); }}
-                style={{ marginTop: 8, background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 13 }}
+                className="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-500/20 hover:bg-red-500/40 border border-red-500/40 flex items-center justify-center text-red-400 transition-colors"
               >
-                Remove
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
 
           {/* Match ID */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", color: "#94a3b8", fontSize: 13, marginBottom: 6 }}>
-              Match ID (optional)
-            </label>
-            <input
+          <div className="mb-4">
+            <Label className="text-[10px] uppercase tracking-widest text-slate-400">Match ID (optional)</Label>
+            <Input
               type="text"
               value={matchId}
               onChange={(e) => setMatchId(e.target.value)}
-              placeholder="e.g. 664abc..."
-              style={{
-                width: "100%", padding: "10px 14px", background: "rgba(0,0,0,0.4)",
-                border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8,
-                color: "#fff", fontSize: 14, boxSizing: "border-box",
-              }}
+              placeholder="e.g. 664abc123…"
+              className="bg-black/40 border-white/10 text-white mt-1 rounded-xl"
             />
           </div>
 
           {/* Prize amount */}
-          <div style={{ marginBottom: 24 }}>
-            <label style={{ display: "block", color: "#94a3b8", fontSize: 13, marginBottom: 6 }}>
-              Prize amount to claim (₹)
-            </label>
-            <input
+          <div className="mb-5">
+            <Label className="text-[10px] uppercase tracking-widest text-slate-400">Prize amount to claim (₹)</Label>
+            <Input
               type="number"
               min="0"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="e.g. 900"
-              style={{
-                width: "100%", padding: "10px 14px", background: "rgba(0,0,0,0.4)",
-                border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8,
-                color: "#fff", fontSize: 14, boxSizing: "border-box",
-              }}
+              className="bg-black/40 border-white/10 text-white mt-1 rounded-xl"
             />
-            {amount && (
-              <p style={{ color: "#10b981", fontSize: 12, marginTop: 4 }}>
-                After 10% commission: ₹{(parseFloat(amount || 0) * 0.9).toFixed(2)}
-              </p>
+            {commission && (
+              <div className="flex items-center gap-1.5 text-emerald-400 text-xs mt-2">
+                <Sparkles className="w-3 h-3" />
+                After 10% commission: <span className="font-bold">₹{commission}</span>
+              </div>
             )}
           </div>
 
           {/* Submit */}
-          <button
+          <Button
             onClick={handleUpload}
             disabled={!file || uploading}
-            style={{
-              width: "100%", padding: "14px 0",
-              background: !file || uploading ? "#374151" : "linear-gradient(135deg, #7c3aed, #2563eb)",
-              color: !file || uploading ? "#9ca3af" : "#fff",
-              border: "none", borderRadius: 10, fontSize: 16, fontWeight: 700,
-              cursor: !file || uploading ? "not-allowed" : "pointer",
-              transition: "background 0.15s",
-            }}
+            className={`w-full h-12 rounded-xl font-black text-base ${file && !uploading ? "btn-neon text-white" : "bg-white/10 text-slate-500 cursor-not-allowed"}`}
           >
-            {uploading ? "Uploading…" : "Submit Screenshot"}
-          </button>
+            {uploading ? (
+              <span className="flex items-center gap-2">
+                <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> Uploading…
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Upload className="w-5 h-5" /> Submit Screenshot
+              </span>
+            )}
+          </Button>
 
+          {/* Message */}
           {message.text && (
-            <div style={{
-              marginTop: 16, padding: "12px 16px", borderRadius: 8, fontSize: 14,
-              background: message.ok ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)",
-              border: `1px solid ${message.ok ? "rgba(16,185,129,0.4)" : "rgba(239,68,68,0.4)"}`,
-              color: message.ok ? "#10b981" : "#ef4444",
-            }}>
+            <div className={`mt-4 flex items-start gap-3 p-4 rounded-xl text-sm border ${
+              message.ok
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                : "bg-red-500/10 border-red-500/30 text-red-400"
+            }`}>
+              {message.ok ? <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> : <XCircle className="w-4 h-4 mt-0.5 shrink-0" />}
               {message.text}
             </div>
           )}
         </div>
 
-        <p style={{ textAlign: "center", color: "#475569", fontSize: 13, marginTop: 20 }}>
+        <p className="text-center text-slate-500 text-xs mt-5 fade-up delay-2">
           Admin usually reviews within 1–2 hours. Prize is added to your Winnings wallet.
         </p>
       </div>

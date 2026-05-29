@@ -168,3 +168,109 @@ code {
 /* Fade in up */
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .fade-up { animation: fadeUp 0.6s ease-out both; }
+
+/* Slide in from sides */
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+.slide-in-left { animation: slideInLeft 0.55s ease-out both; }
+.slide-in-right { animation: slideInRight 0.55s ease-out both; }
+
+/* Stagger helpers */
+.delay-1 { animation-delay: 0.08s; }
+.delay-2 { animation-delay: 0.16s; }
+.delay-3 { animation-delay: 0.24s; }
+.delay-4 { animation-delay: 0.32s; }
+.delay-5 { animation-delay: 0.40s; }
+
+/* Scale in */
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+.scale-in { animation: scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+/* Shimmer skeleton */
+@keyframes shimmer {
+    0% { background-position: -400% 0; }
+    100% { background-position: 400% 0; }
+}
+.skeleton {
+    background: linear-gradient(90deg,
+        rgba(255,255,255,0.03) 0%,
+        rgba(255,255,255,0.07) 25%,
+        rgba(255,255,255,0.03) 50%
+    );
+    background-size: 400% 100%;
+    animation: shimmer 1.6s ease-in-out infinite;
+    border-radius: 10px;
+}
+
+/* Neon button base */
+.btn-neon {
+    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+    box-shadow: 0 0 20px rgba(124,58,237,0.45), 0 4px 16px rgba(0,0,0,0.4);
+    transition: box-shadow 0.25s ease, transform 0.2s ease;
+}
+.btn-neon:hover:not(:disabled) {
+    box-shadow: 0 0 38px rgba(124,58,237,0.8), 0 0 72px rgba(37,99,235,0.4), 0 4px 20px rgba(0,0,0,0.4);
+    transform: translateY(-2px);
+}
+.btn-neon:active { transform: translateY(0); }
+
+/* Neon green */
+.btn-neon-green {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 0 20px rgba(16,185,129,0.4), 0 4px 16px rgba(0,0,0,0.4);
+    transition: box-shadow 0.25s ease, transform 0.2s ease;
+}
+.btn-neon-green:hover:not(:disabled) {
+    box-shadow: 0 0 38px rgba(16,185,129,0.7), 0 0 72px rgba(5,150,105,0.3);
+    transform: translateY(-2px);
+}
+
+/* Card hover lift */
+.card-hover {
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 48px rgba(147,51,234,0.2);
+}
+
+/* VS pulse for match room */
+@keyframes vsPulse {
+    0%, 100% { text-shadow: 0 0 10px rgba(147,51,234,0.5); }
+    50% { text-shadow: 0 0 24px rgba(147,51,234,1), 0 0 48px rgba(37,99,235,0.6); }
+}
+.vs-text { animation: vsPulse 2.5s ease-in-out infinite; }
+
+/* Room code glow animation */
+@keyframes roomGlow {
+    0%, 100% { text-shadow: 0 0 20px rgba(147,51,234,0.5), 0 0 40px rgba(37,99,235,0.3); }
+    50% { text-shadow: 0 0 40px rgba(147,51,234,0.9), 0 0 80px rgba(37,99,235,0.6), 0 0 120px rgba(147,51,234,0.3); }
+}
+.room-code-glow { animation: roomGlow 3s ease-in-out infinite; }
+
+/* Toast premium */
+[data-sonner-toast] {
+    backdrop-filter: blur(20px) !important;
+    background: rgba(12,12,18,0.92) !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5) !important;
+}
+
+/* Status banner badge */
+@keyframes statusBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+.status-dot-live { animation: statusBlink 1.6s ease-in-out infinite; }
+
+/* Input glow on focus */
+input:focus-visible, textarea:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(124,58,237,0.45) !important;
+}
+
+/* Mobile fine-tune */
+@media (max-width: 640px) {
+    ::-webkit-scrollbar { width: 3px; }
+    h1 { letter-spacing: -0.03em; }
+}

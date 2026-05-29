@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, fmtINR } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +13,24 @@ import {
   ArrowRight, IndianRupee, Users, Sparkles, ChevronRight, Star, Award,
 } from "lucide-react";
 import { toast } from "sonner";
+
+function CountUp({ value, fmt = (n) => n.toLocaleString("en-IN"), suffix = "", duration = 1400 }) {
+  const [display, setDisplay] = useState(0);
+  const rafRef = useRef();
+  useEffect(() => {
+    if (!value) return;
+    const start = performance.now();
+    const animate = (now) => {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplay(Math.floor(value * eased));
+      if (t < 1) rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [value, duration]);
+  return <>{fmt(display)}{suffix}</>;
+}
 
 const HERO_BG = "https://static.prod-images.emergentagent.com/jobs/77b22318-d6be-4e76-845b-53f7f99d9a1e/images/4ff20b5f68aa629b6a7de9e01143b9401fddb52dff662695cb7acf9a89c17d0e.png";
 const VIP_BG = "https://static.prod-images.emergentagent.com/jobs/77b22318-d6be-4e76-845b-53f7f99d9a1e/images/a023038effd47038aa73b3857d8ef79c3c7c8d0216d0c94efabc106b00b8656d.png";
@@ -123,19 +141,21 @@ export default function Home() {
             </Button>
           </div>
 
-          {/* Stat strip */}
+          {/* Stat strip — animated counters */}
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl">
             {[
-              { label: "Online now", value: online.toLocaleString("en-IN"), icon: Users, color: "text-emerald-400" },
-              { label: "Players", value: (stats.users + 12450).toLocaleString("en-IN") + "+", icon: Star, color: "text-purple-300" },
-              { label: "Matches", value: (stats.matches + 38210).toLocaleString("en-IN") + "+", icon: Dice5, color: "text-blue-300" },
-              { label: "Prize paid", value: fmtINR(stats.total_prize_paid + 12500000) + "+", icon: Trophy, color: "text-amber-300" },
-            ].map((s, i) => (
-              <div key={i} className="glass rounded-2xl p-4" data-testid={`hero-stat-${i}`}>
+              { label: "Online now",  raw: online,                           icon: Users,  color: "text-emerald-400", suffix: "",  i: 0 },
+              { label: "Players",     raw: stats.users + 12450,               icon: Star,   color: "text-purple-300",  suffix: "+", i: 1 },
+              { label: "Matches",     raw: stats.matches + 38210,             icon: Dice5,  color: "text-blue-300",    suffix: "+", i: 2 },
+              { label: "Prize paid",  raw: stats.total_prize_paid + 12500000, icon: Trophy, color: "text-amber-300",   suffix: "+", fmt: fmtINR, i: 3 },
+            ].map((s) => (
+              <div key={s.label} className={`glass rounded-2xl p-4 card-hover fade-up delay-${s.i + 1}`} data-testid={`hero-stat-${s.i}`}>
                 <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-slate-400">
                   <s.icon className={`w-3.5 h-3.5 ${s.color}`} /> {s.label}
                 </div>
-                <div className="mt-1.5 text-2xl font-bold text-white">{s.value}</div>
+                <div className={`mt-1.5 text-2xl font-black ${s.color}`}>
+                  <CountUp value={s.raw} fmt={s.fmt} suffix={s.suffix} />
+                </div>
               </div>
             ))}
           </div>

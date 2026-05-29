@@ -74,7 +74,7 @@ export default function Wallet() {
   return (
     <div className="min-h-screen pt-24 pb-16 bg-[#0A0A0E] text-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <div className="relative rounded-3xl overflow-hidden glass-strong border-white/10 p-6 md:p-8 mb-8" data-testid="wallet-hero">
+        <div className="relative rounded-3xl overflow-hidden glass-strong border-white/10 p-6 md:p-8 mb-8 fade-up" data-testid="wallet-hero">
           <img src={COINS_BG} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0E] via-[#0A0A0E]/70 to-transparent" />
           <div className="relative grid md:grid-cols-3 gap-4">

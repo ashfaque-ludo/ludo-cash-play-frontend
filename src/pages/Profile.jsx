@@ -72,7 +72,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen pt-24 pb-16 bg-[#0A0A0E] text-white">
       <div className="max-w-2xl mx-auto px-6 space-y-6">
-        <div className="mb-2">
+        <div className="mb-2 fade-up">
           <div className="text-xs uppercase tracking-[0.25em] text-purple-400 font-bold mb-1">Account</div>
           <h1 className="text-3xl font-extrabold">My Profile</h1>
         </div>

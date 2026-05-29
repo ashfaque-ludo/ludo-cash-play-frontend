@@ -9,7 +9,7 @@ export default function Leaderboard() {
   return (
     <div className="min-h-screen pt-24 pb-16 bg-[#0A0A0E] text-white">
       <div className="max-w-3xl mx-auto px-6">
-        <div className="text-center mb-10">
+        <div className="text-center mb-10 fade-up">
           <div className="text-xs uppercase tracking-[0.25em] text-amber-400 font-bold">Hall of fame</div>
           <h1 className="text-4xl sm:text-5xl font-extrabold mt-2"><span className="grad-text-gold">Leaderboard</span></h1>
           <p className="text-slate-400 mt-2">Top earners this season</p>

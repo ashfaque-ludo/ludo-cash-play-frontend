@@ -80,7 +80,7 @@ export default function MatchLobby() {
   return (
     <div className="min-h-screen pt-24 pb-16 bg-[#0A0A0E] text-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4 fade-up">
           <div>
             <div className="text-xs uppercase tracking-[0.25em] text-purple-400 font-bold">Match lobby</div>
             <h1 className="text-3xl sm:text-4xl font-extrabold mt-1">Pick your <span className="grad-text">arena</span></h1>

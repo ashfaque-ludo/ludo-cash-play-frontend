@@ -59,7 +59,15 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Footer />
-        <Toaster richColors position="top-right" />
+        <Toaster
+          richColors
+          position="top-right"
+          toastOptions={{
+            style: { fontFamily: "'Manrope', sans-serif", fontSize: "14px" },
+            duration: 3500,
+          }}
+          closeButton
+        />
       </AuthProvider>
     </BrowserRouter>
   );

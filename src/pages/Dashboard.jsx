@@ -5,12 +5,14 @@ import { api, fmtINR } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wallet as WalletIcon, Dice5, Trophy, Users, Sparkles, Crown, ArrowRight, ShieldCheck, Camera, ArrowDownToLine, Clock, User } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Wallet as WalletIcon, Dice5, Trophy, Sparkles, Crown, ArrowRight, Camera, ArrowDownToLine, Clock, User } from "lucide-react";
 
 export default function Dashboard() {
   const { user, refresh } = useAuth();
   const [tx, setTx] = useState([]);
   const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -23,18 +25,36 @@ export default function Dashboard() {
         setMatches(m.data.matches);
         refresh();
       } catch {}
+      finally { setLoading(false); }
     })();
     // eslint-disable-next-line
   }, []);
 
   if (!user || user === false) return null;
+
+  if (loading) return (
+    <div className="min-h-screen pt-24 pb-16 bg-[#0A0A0E] text-white">
+      <div className="max-w-7xl mx-auto px-6 lg:px-12">
+        <Skeleton className="h-10 w-64 mb-2" />
+        <Skeleton className="h-4 w-40 mb-8" />
+        <div className="grid lg:grid-cols-3 gap-5">
+          <Skeleton className="h-40 rounded-2xl lg:col-span-2" />
+          <Skeleton className="h-40 rounded-2xl" />
+        </div>
+        <div className="grid lg:grid-cols-2 gap-5 mt-5">
+          <Skeleton className="h-56 rounded-2xl" />
+          <Skeleton className="h-56 rounded-2xl" />
+        </div>
+      </div>
+    </div>
+  );
   const w = user.wallet || {deposit:0,winning:0,bonus:0};
   const total = (w.deposit||0)+(w.winning||0)+(w.bonus||0);
 
   return (
     <div className="min-h-screen pt-24 pb-16 bg-[#0A0A0E] text-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4 fade-up">
           <div>
             <div className="text-xs uppercase tracking-[0.25em] text-purple-400 font-bold">Welcome back</div>
             <h1 className="text-3xl sm:text-4xl font-extrabold mt-1">Hello, <span className="grad-text">{user.name || "Player"}</span></h1>
@@ -50,7 +70,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="mt-8 grid lg:grid-cols-3 gap-5">
+        <div className="mt-8 grid lg:grid-cols-3 gap-5 fade-up delay-1">
           <Card className="glass-strong border-white/10 lg:col-span-2 text-white" data-testid="dash-wallet-card">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Wallet balance</CardTitle>
@@ -93,7 +113,7 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        <div className="mt-8 grid lg:grid-cols-2 gap-5">
+        <div className="mt-8 grid lg:grid-cols-2 gap-5 fade-up delay-2">
           <Card className="glass-strong border-white/10 text-white">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Recent transactions</CardTitle>
