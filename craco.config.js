@@ -33,6 +33,12 @@ let webpackConfig = {
       '@': path.resolve(__dirname, 'src'),
     },
     configure: (webpackConfig) => {
+      // Remove ForkTsCheckerWebpackPlugin — its bundled ajv-keywords@3 crashes
+      // on Node 20+ and is unnecessary for a pure-JS project.
+      webpackConfig.plugins = webpackConfig.plugins.filter(
+        (p) => p.constructor && p.constructor.name !== "ForkTsCheckerWebpackPlugin"
+      );
+
       webpackConfig.watchOptions = {
         ...webpackConfig.watchOptions,
         ignored: [
