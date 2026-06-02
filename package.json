@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "20.x"
+    "node": "18.x"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
@@ -100,6 +100,7 @@
   },
   "overrides": {
     "ajv": "^8",
-    "ajv-keywords": "^5"
+    "ajv-keywords": "^5",
+    "fork-ts-checker-webpack-plugin": "^6.5.3"
   }
 }
